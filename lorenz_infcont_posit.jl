@@ -1,5 +1,5 @@
 using JLD
-using PyPlot
+using SigmoidNumbers
 using PyCall
 @pyimport numpy as np
 
@@ -52,9 +52,9 @@ function bits_signed_exp(x::Float32,i::Int)
 
         if i == 2   # sign of exponent
             if k < 0
-                se = '1'
+                return '1'
             else
-                se = '0'
+                return '0'
             end
         else
             return bits(abs(k))[end-9+i]    # the remaining 7 bits of the exponent
@@ -62,11 +62,10 @@ function bits_signed_exp(x::Float32,i::Int)
     end
 end
 
-i = 1
-bi = [parse(Int,bits_signed_exp(xi,i)) for xi in x]
-
-lag = 200
-p0,p1,q0,q1 = conditional_histogram(x,bi,bins,lag)
+function bits_posits(x::Float32,i::Int,P)
+    xp = P(x)
+    return bits(xp)[i]
+end
 
 # entropy calculation
 function entropy(p::Array)
@@ -79,22 +78,38 @@ function entropy(p::Array)
     return H
 end
 
-Hx = entropy(p)
-Hb0 = entropy(p0)
-Hb1 = entropy(p1)
+function entropy_calc(p,p0,p1,q0,q1)
 
-# bitwise information content
-Ib = Hx - q0*Hb0 - q1*Hb1
+    Hx = entropy(p)
+    Hb0 = entropy(p0)
+    Hb1 = entropy(p1)
 
-# plotting
-function f2(x)
-    return @sprintf("%.3f",x)
+    # bitwise information content
+    return Hx - q0*Hb0 - q1*Hb1
 end
 
-##
-fig,ax = subplots()
+function information_content(x::Array{Float32,1},p::Array,bins::Array,lags::Array{Int},P)
+    # preallocate
+    nlags = length(lags)
+    Icont = zeros(32,nlags)
 
-ax[:plot](binsmid,p)#,drawstyle="steps-post")
-ax[:plot](binsmid,p0)#,drawstyle="steps-post")
-ax[:plot](binsmid,p1)#,drawstyle="steps-post")
-ax[:set_title]("bit$i, lag=$lag, H = ($(f2(Hx)),$(f2(Hb0)),$(f2(Hb1))), I = $(f2(Ib))")
+    for (ilag,lag) in enumerate(lags)
+        for bit in 1:32
+
+            bi = [parse(Int,bits_posits(xi,bit,P)) for xi in x]
+            p0,p1,q0,q1 = conditional_histogram(x,bi,bins,lag)
+
+            Icont[bit,ilag] = entropy_calc(p,p0,p1,q0,q1)
+            println("$ilag/$nlags,$bit/32, $(Icont[bit,ilag])")
+        end
+    end
+    return Icont
+end
+
+
+# preallocate
+lags = Int.(round.(10.^(-1.5:0.1:2)./0.005))
+P = Posit{32,2}
+Icont = information_content(x,p,bins,lags,P)
+
+save("data/infcont_posits.jld","Icont",Icont)
