@@ -1,11 +1,11 @@
 using JLD
-using SigmoidNumbers
+using PyPlot
 using PyCall
 @pyimport numpy as np
 
 D = load("/home/kloewer/julia/lorenz_posit/dec_accuracy/data/lorenz_hr.jld")
 
-x = D["xyz"][1,:]
+x = Float32.(D["xyz"][1,:])
 y = D["xyz"][2,:]
 z = D["xyz"][3,:]
 ##
@@ -52,9 +52,9 @@ function bits_signed_exp(x::Float32,i::Int)
 
         if i == 2   # sign of exponent
             if k < 0
-                return '1'
+                se = '1'
             else
-                return '0'
+                se = '0'
             end
         else
             return bits(abs(k))[end-9+i]    # the remaining 7 bits of the exponent
@@ -62,55 +62,59 @@ function bits_signed_exp(x::Float32,i::Int)
     end
 end
 
-# entropy calculation
-function entropy(p::Array)
-    H = 0.
-    for pi in p[:]
-        if pi > 0.
-            H -= pi*log2(pi)
-        end
-    end
-    return H
-end
+##
 
-function entropy_calc(p,p0,p1,q0,q1)
+fig,axs = subplots(1,3,sharex=true,sharey=true,figsize=(10,3))
+
+for (ax,lag) in zip([axs[1],axs[2],axs[3]],[0,40,200])
+    i = 1
+    bi = [parse(Int,bits_signed_exp(xi,i)) for xi in x]
+
+    #lag = 20
+    p0,p1,q0,q1 = conditional_histogram(x,bi,bins,lag)
+
+    # entropy calculation
+    function entropy(p::Array)
+        H = 0.
+        for pi in p[:]
+            if pi > 0.
+                H -= pi*log2(pi)
+            end
+        end
+        return H
+    end
 
     Hx = entropy(p)
     Hb0 = entropy(p0)
     Hb1 = entropy(p1)
 
     # bitwise information content
-    return Hx - q0*Hb0 - q1*Hb1
-end
+    Ib = Hx - q0*Hb0 - q1*Hb1
 
-function information_content(x::Array{Float64,1},p::Array,bins::Array,lags::Array{Int},P)
-    # preallocate
-    nlags = length(lags)
-    Icont = zeros(32,nlags)
-
-    # convert only once to posit bits
-    B = zeros(Int8,32,length(x))
-    for (xin,xi) in enumerate(x)
-        for (ib,b) in enumerate(bits(P(xi)))
-            B[ib,xin] = parse(Int,b)
-        end
+    # plotting
+    function f2(x)
+        return @sprintf("%.3f",x)
     end
 
-    for (ilag,lag) in enumerate(lags)
-        for ibit in 1:32
-            p0,p1,q0,q1 = conditional_histogram(x,B[ibit,:],bins,lag)
-
-            Icont[ibit,ilag] = entropy_calc(p,p0,p1,q0,q1)
-            println("$ilag/$nlags,$ibit/32, $(Icont[ibit,ilag])")
-        end
-    end
-    return Icont
+    #
+    ax[:plot](binsmid,p,drawstyle="steps-post",label=L"$p(x)$")
+    ax[:plot](binsmid,p0,drawstyle="steps-post",label=L"$p(x|x_1(t-τ) = 0)$")
+    ax[:plot](binsmid,p1,drawstyle="steps-post",label=L"$p(x|x_1(t-τ) = 1)$")
+    ax[:text](8,0.028,"I = $(f2(Ib))")
 end
 
+axs[1][:set_title]("instantaneous (τ = 0)")
+axs[2][:set_title]("short forecast (τ = 0.2)")
+axs[3][:set_title]("long forecast (τ = 1)")
 
-# preallocate
-lags = cat(1,[0,1,2,3,4,5],Int.(round.(10.^(-1.5:0.1:2)./0.005)))
-P = Posit{32,2}
-Icont = information_content(x,p,bins,lags,P)
+axs[1][:set_xlabel](L"$x$")
+axs[2][:set_xlabel](L"$x$")
+axs[3][:set_xlabel](L"$x$")
+axs[3][:legend](loc=2)
 
-save("data/infcont_posits.jld","Icont",Icont)
+axs[1][:set_title]("a",loc="left",fontweight="bold")
+axs[2][:set_title]("b",loc="left",fontweight="bold")
+axs[3][:set_title]("c",loc="left",fontweight="bold")
+
+
+tight_layout()

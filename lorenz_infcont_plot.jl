@@ -29,7 +29,7 @@ ylabel2 = cat(1,ylabelsign,ylabelposit)
 
 fig,(ax1,ax2) = subplots(1,2,figsize=(10,5),sharex=true)
 Q1 = ax1[:pcolormesh](lagvec,bitvec,lIcontf,vmin=-10,vmax=1,cmap="cubehelix_r")
-Q2 = ax2[:pcolormesh](lagvec[1:end-4,:],bitvec[1:end-4,:],lIcontp[1:end-4,:],vmin=-10,vmax=1,cmap="cubehelix_r")
+Q2 = ax2[:pcolormesh](lagvec,bitvec,lIcontp,vmin=-10,vmax=1,cmap="cubehelix_r")
 
 ax1[:invert_yaxis]()
 ax1[:set_yticks](Array(1:size(Icontf)[1]))
@@ -56,7 +56,8 @@ ax1[:set_ylim](32.5,.5)
 ax2[:set_ylim](32.5,.5)
 ax1[:set_xlim](1,36)
 ax2[:set_xlim](1,36)
-ax1[:set_title]("2bit Floats")
+ax1[:set_title]("32bit Floats")
 ax2[:set_title]("32bit Posits")
+
 
 savefig("inf_cont.pdf")

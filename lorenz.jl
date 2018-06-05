@@ -5,7 +5,7 @@ using PyCall
 
 D = load("/home/kloewer/julia/lorenz_posit/dec_accuracy/data/lorenz_hr.jld")
 
-x = D["xyz"][1,:]
+x = Float32.(D["xyz"][1,:])
 y = D["xyz"][2,:]
 z = D["xyz"][3,:]
 ##
@@ -65,7 +65,7 @@ end
 i = 1
 bi = [parse(Int,bits_signed_exp(xi,i)) for xi in x]
 
-lag = 200
+lag = 20
 p0,p1,q0,q1 = conditional_histogram(x,bi,bins,lag)
 
 # entropy calculation

@@ -5,9 +5,9 @@ using PyCall
 
 D = load("/home/kloewer/julia/lorenz_posit/dec_accuracy/data/lorenz_hr.jld")
 
-x = D["xyz"][1,:]
-y = D["xyz"][2,:]
-z = D["xyz"][3,:]
+x = Float32.(D["xyz"][1,:])
+#y = D["xyz"][2,:]
+#z = D["xyz"][3,:]
 ##
 N = length(x)
 
@@ -102,7 +102,7 @@ end
 
 
 # preallocate
-lags = Int.(round.(10.^(-1.5:0.1:2)./0.005))
+lags = cat(1,[0,1,2,3,4,5],Int.(round.(10.^(-1.5:0.1:2)./0.005)))
 Icont = information_content(x,p,bins,lags)
 
 save("data/infcont_floats.jld","Icont",Icont)
