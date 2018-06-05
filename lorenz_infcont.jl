@@ -37,29 +37,26 @@ function conditional_histogram(x::Array,cond::Array,bins::Array,lag::Int)
     return p0,p1,q0,q1
 end
 
-function bits_signed_exp(x::Float32,i::Int)
+function bits_signed_exp(x::Float32)
     # converts the exponent bits from an unsigned integer to a signed integer
-    if i == 1 || i >= 10    # the bit requested is not an exponent bit
-        return bits(x)[i]
-    else    # i is in [2,..,9]
-        bias = 127
-        k = parse(Int,"0b"*bits(x)[2:9])-bias    # signed exponent
+    all_bits = bits(x)  # unsigned exp
 
-        # subnormal numbers, i.e. x=0 means all exponent bits are 0
-        if k == -bias   # i.e. x was 0
-            k = 0
-        end
+    bias = 127
+    k = parse(Int,"0b"*bits(x)[2:9])-bias    # signed exponent
 
-        if i == 2   # sign of exponent
-            if k < 0
-                se = '1'
-            else
-                se = '0'
-            end
+    # subnormal numbers, i.e. x=0 means all exponent bits are 0
+    if k == -bias   # i.e. x was 0
+        s_exp_bits = repeat("0",8)
+    else
+        if k < 0
+            s0 = "1"
         else
-            return bits(abs(k))[end-9+i]    # the remaining 7 bits of the exponent
+            s0 = "0"
         end
+
+        s_exp_bits = s0*bits(abs(k))[end-6:end]    # the remaining 7 bits of the exponent
     end
+    return all_bits[1]*s_exp_bits*all_bits[10:end]
 end
 
 # entropy calculation
@@ -88,13 +85,19 @@ function information_content(x::Array{Float32,1},p::Array,bins::Array,lags::Arra
     nlags = length(lags)
     Icont = zeros(32,nlags)
 
-    for (ilag,lag) in enumerate(lags)
-        for bit in 1:32
-            println("$ilag/$nlags,$bit/32")
-            bi = [parse(Int,bits_signed_exp(xi,bit)) for xi in x]
-            p0,p1,q0,q1 = conditional_histogram(x,bi,bins,lag)
+    # convert only once to float32 bits
+    B = zeros(Int8,32,length(x))
+    for (xin,xi) in enumerate(x)
+        for (ib,b) in enumerate(bits(xi))
+            B[ib,xin] = parse(Int,b)
+        end
+    end
 
-            Icont[bit,ilag] = entropy_calc(p,p0,p1,q0,q1)
+    for (ilag,lag) in enumerate(lags)
+        for ibit = 1:32
+            p0,p1,q0,q1 = conditional_histogram(x,B[ibit,:],bins,lag)
+            Icont[ibit,ilag] = entropy_calc(p,p0,p1,q0,q1)
+            println("$ilag/$nlags,$ibit/32")
         end
     end
     return Icont

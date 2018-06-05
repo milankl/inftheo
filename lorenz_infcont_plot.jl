@@ -14,7 +14,8 @@ lIcontf = log.(Icontf)
 Icontp[Icontp.<=0] = NaN
 lIcontp = log.(Icontp)
 
-lags = Int.(round.(10.^(-1.5:0.1:2)./0.005))
+#lags = Int.(round.(10.^(-1.5:0.1:2)./0.005))
+lags = cat(1,[0,1,2,3,4,5],Int.(round.(10.^(-1.5:0.1:2)./0.005)))
 
 bitvec = repmat(-.5 + (1:size(Icontf)[1]),1,size(Icontf)[2])
 lagvec = repmat(1:size(Icontf)[2],1,size(Icontf)[1])'
@@ -46,11 +47,16 @@ ax1[:set_xticklabels]([L"10^{-1}",L"10^{0}",L"10^{1}",L"10^{2}"])
 ax1[:set_xlabel]("forecast time (mtu)")
 ax2[:set_xlabel]("forecast time (mtu)")
 
-ax1[:plot]([0,36],[1.5,1.5],"k",lw=2)
-ax1[:plot]([0,36],[9.5,9.5],"k",lw=2)
+ax1[:plot]([0,36],[1.5,1.5],"w",lw=2)
+ax1[:plot]([0,36],[9.5,9.5],"w",lw=2)
 
-ax2[:plot]([0,36],[1.5,1.5],"k",lw=2)
+ax2[:plot]([0,36],[1.5,1.5],"w",lw=2)
 #ax2[:plot]([0,36],[9.5,9.5],"k",lw=2)
+
+ax1[:plot]([7,7],[0,32],"w",lw=1)
+ax2[:plot]([7,7],[0,32],"w",lw=1)
+
+
 
 ax1[:set_ylim](32.5,.5)
 ax2[:set_ylim](32.5,.5)
