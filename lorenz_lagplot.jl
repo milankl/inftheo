@@ -67,7 +67,7 @@ end
 fig,axs = subplots(1,3,sharex=true,sharey=true,figsize=(10,3))
 
 for (ax,lag) in zip([axs[1],axs[2],axs[3]],[0,40,200])
-    i = 1
+    i = 8
     bi = [parse(Int,bits_signed_exp(xi,i)) for xi in x]
 
     #lag = 20
@@ -118,3 +118,6 @@ axs[3][:set_title]("c",loc="left",fontweight="bold")
 
 
 tight_layout()
+savefig("bitwise_inf.pdf")
+
+close(fig)
