@@ -88,7 +88,7 @@ function information_content(x::Array{Float32,1},p::Array,bins::Array,lags::Arra
     # convert only once to float32 bits
     B = zeros(Int8,32,length(x))
     for (xin,xi) in enumerate(x)
-        for (ib,b) in enumerate(bits(xi))
+        for (ib,b) in enumerate(bits_signed_exp(xi))
             B[ib,xin] = parse(Int,b)
         end
     end

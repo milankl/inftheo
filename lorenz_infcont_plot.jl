@@ -35,35 +35,36 @@ Q2 = ax2[:pcolormesh](lagvec,bitvec,lIcontp,vmin=-10,vmax=1,cmap="cubehelix_r")
 ax1[:invert_yaxis]()
 ax1[:set_yticks](Array(1:size(Icontf)[1]))
 ax1[:set_yticklabels](ylabels)
-colorbar(ax=(ax1,ax2),Q2)
+cb = colorbar(ax=(ax1,ax2),Q2)
+cb[:set_label](L"$\log_{10}(I_b)$")
 
 ax2[:invert_yaxis]()
 ax2[:set_yticks](Array(1:size(Icontf)[1]))
 ax2[:set_yticklabels](ylabel2)
 
-xtiks = [find(lags*0.005 .== x) for x in [0.1,1.,10.,100.]]
+xtiks = [find(lags*0.005 .== x) for x in [0.01,0.1,1.,10.,100.]]
 ax1[:set_xticks](xtiks)
-ax1[:set_xticklabels]([L"10^{-1}",L"10^{0}",L"10^{1}",L"10^{2}"])
+ax1[:set_xticklabels]([L"10^{-2}",L"10^{-1}",L"10^{0}",L"10^{1}",L"10^{2}"])
 ax1[:set_xlabel]("forecast time (mtu)")
 ax2[:set_xlabel]("forecast time (mtu)")
 
-ax1[:plot]([0,36],[1.5,1.5],"w",lw=2)
-ax1[:plot]([0,36],[9.5,9.5],"w",lw=2)
+ax1[:plot]([0,36],[1.5,1.5],"w",lw=1.5)
+ax1[:plot]([0,36],[9.5,9.5],"w",lw=1.5)
 
-ax2[:plot]([0,36],[1.5,1.5],"w",lw=2)
+ax2[:plot]([0,36],[1.5,1.5],"w",lw=1.5)
 #ax2[:plot]([0,36],[9.5,9.5],"k",lw=2)
 
-ax1[:plot]([7,7],[0,32],"w",lw=1)
-ax2[:plot]([7,7],[0,32],"w",lw=1)
-
+#ax1[:plot]([7,7],[0,42],"w",lw=1)
+#ax2[:plot]([7,7],[0,42],"w",lw=1)
 
 
 ax1[:set_ylim](32.5,.5)
 ax2[:set_ylim](32.5,.5)
-ax1[:set_xlim](1,36)
-ax2[:set_xlim](1,36)
+ax1[:set_xlim](1,42)
+ax2[:set_xlim](1,42)
 ax1[:set_title]("32bit Floats")
 ax2[:set_title]("32bit Posits")
 
 
 savefig("inf_cont.pdf")
+close(fig)
