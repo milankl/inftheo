@@ -3,18 +3,21 @@ using PyPlot
 using PyCall
 @pyimport numpy as np
 
-D = load("/home/kloewer/julia/lorenz_posit/dec_accuracy/data/lorenz_hr.jld")
+N = 10000000
 
-x = Float32.(D["xyz"][1,:])
-y = Float32.(D["xyz"][2,:])
-z = Float32.(D["xyz"][3,:])
-#
-N = length(x)
+# create AR1 process
+ar1 = 0.9   # correlation at lag 1
+predictor = Array{Float32}(N)
+predictor[1] = randn(Float32,1)[1]
+for n = 1:N-1
+    predictor[n+1] = ar1*predictor[n] + sqrt(1-ar1^2)*randn(Float32,1)[1]
+end
+
+predictand = deepcopy(predictor)
 
 # histogram of x
-bins = -26.1:0.3:26.1
-#bins = 0:0.3:50
-C,bins = np.histogram(y,bins)
+bins = -5:0.1:5
+C,bins = np.histogram(predictand,bins)
 p = C/N         # pdf
 
 # bin arrays
@@ -63,20 +66,18 @@ function bits_signed_exp(x::Float32,i::Int)
     end
 end
 
-#
-
-using SigmoidNumbers
-P = Posit{32,2}
+#using SigmoidNumbers
+#P = Posit{32,2}
 
 fig,axs = subplots(1,3,sharex=true,sharey=true,figsize=(10,3))
 
-for (ax,lag) in zip([axs[1],axs[2],axs[3]],[0,40,200])
+for (ax,lag) in zip([axs[1],axs[2],axs[3]],[0,10,20])
     i = 1
-    #bi = [parse(Int,bits_signed_exp(xi,i)) for xi in x]
-    bi = [parse(Int,bits(P(xi))[i]) for xi in x]
+    bi = [parse(Int,bits_signed_exp(xi,i)) for xi in predictor]
+    #bi = [parse(Int,bits(P(xi))[i]) for xi in x]
 
     #lag = 20
-    p0,p1,q0,q1 = conditional_histogram(y,bi,bins,lag)
+    p0,p1,q0,q1 = conditional_histogram(predictand,bi,bins,lag)
 
     # entropy calculation
     function entropy(p::Array)
@@ -105,7 +106,7 @@ for (ax,lag) in zip([axs[1],axs[2],axs[3]],[0,40,200])
     ax[:plot](binsmid,p,drawstyle="steps-post",label=L"$p(x)$")
     ax[:plot](binsmid,p0,drawstyle="steps-post",label=L"$p(x|x_1(t-τ) = 0)$")
     ax[:plot](binsmid,p1,drawstyle="steps-post",label=L"$p(x|x_1(t-τ) = 1)$")
-    ax[:text](8,0.01,"I = $(f2(Ib))")
+    ax[:text](0.7,0.9,"I = $(f2(Ib))",transform=ax[:transAxes])
 end
 
 axs[1][:set_title]("instantaneous (τ = 0)")
@@ -123,7 +124,7 @@ axs[3][:set_title]("c",loc="left",fontweight="bold")
 
 
 tight_layout()
-savefig("bitwise_inf_posit.pdf")
+savefig("bitwise_inf_ar1.pdf")
 #savefig("bitwise_inf.pdf")
 
 close(fig)

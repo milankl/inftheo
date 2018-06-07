@@ -6,7 +6,7 @@ using PyCall
 cd("/home/kloewer/julia/inftheo/")
 
 # load one file to get size
-Ixx = load("data/infcont_floats_xx.jld")["Icont"]
+Ixx = load("data/infcont_posits_xx.jld")["Icont"]
 n,m = size(Ixx)
 
 # preallocate
@@ -16,7 +16,7 @@ Iall = zeros(3,3,n,m)
 for (ip1,predictor) in enumerate(["x","y","z"])
     for (ip2,predictand) in enumerate(["x","y","z"])
         suffix = predictor*predictand
-        I = load("data/infcont_floats_$suffix.jld")["Icont"]
+        I = load("data/infcont_posits_$suffix.jld")["Icont"]
         I[I.<=0] = NaN
         Iall[ip1,ip2,:,:] = log10.(I)     # plot information content logarithmically
     end
@@ -28,11 +28,7 @@ bitvec = repmat(-.5 + (1:n),1,m)
 lagvec = repmat(1:m,1,n)'
 
 ylabelsign = [L"sign"]
-ylabelexp = [LaTeXString('$'*"e_$i"*'$') for i in 1:8]
-ylabelfrac = [LaTeXString('$'*"f_{$i}"*'$') for i in 1:23]
 ylabelposit = [LaTeXString('$'*"b_{$i}"*'$') for i in 2:32]
-
-ylabels = cat(1,ylabelsign,ylabelexp,ylabelfrac)
 ylabel2 = cat(1,ylabelsign,ylabelposit)
 
 fig,axs = subplots(3,3,figsize=(10,10),sharex=true,sharey=true)
@@ -56,9 +52,9 @@ cb[:set_label](L"Information content $\log_{10}(I_b)$")
 
 axs[1,1][:invert_yaxis]()
 axs[1,1][:set_yticks](Array(1:n))
-axs[1,1][:set_yticklabels](ylabels,fontsize=7)
-axs[2,1][:set_yticklabels](ylabels,fontsize=7)
-axs[3,1][:set_yticklabels](ylabels,fontsize=7)
+axs[1,1][:set_yticklabels](ylabel2,fontsize=7)
+axs[2,1][:set_yticklabels](ylabel2,fontsize=7)
+axs[3,1][:set_yticklabels](ylabel2,fontsize=7)
 
 # 0.005 is the timestep
 xtiks = [find(lags*0.005 .== x) for x in [0.01,0.1,1.,10.,100.]]
@@ -85,8 +81,6 @@ isubtit = 0
 for i = 1:3
     for j = 1:3
         axs[i,j][:plot]([0,42],[1.5,1.5],"w",lw=1.5)
-        axs[i,j][:plot]([0,42],[9.5,9.5],"w",lw=1.5)
-
         isubtit += 1
         axs[i,j][:text](3,31,subtitl[isubtit],fontweight="bold")
     end
@@ -100,5 +94,5 @@ axs[1,1][:set_ylabel]("Predictor x",fontsize=12)
 axs[2,1][:set_ylabel]("Predictor y",fontsize=12)
 axs[3,1][:set_ylabel]("Predictor z",fontsize=12)
 
-savefig("inf_cont_xyz.pdf")
+savefig("inf_cont_xyz_posits.pdf")
 close(fig)

@@ -5,16 +5,23 @@ using PyCall
 
 D = load("/home/kloewer/julia/lorenz_posit/dec_accuracy/data/lorenz_hr.jld")
 
-x = D["xyz"][1,:]
-y = D["xyz"][2,:]
-z = D["xyz"][3,:]
-##
-N = length(x)
+predictor = D["xyz"][3,:]
+predictand = D["xyz"][2,:]
 
-# histogram of x
-bins = -20.1:0.3:20.1
-C,bins = np.histogram(x,bins)
+suffix = "zy"
+println(suffix)
+
+N = length(predictand)
+
+# unconditional pdf, histogram of predictand
+h = 0.3
+#bins = -20.1:h:20.1     # for predictand x
+bins = -27.3:h:27.3     # for predictand y
+#bins = 0.0:h:50.0           # for predictand z
+C,bins = np.histogram(predictand,bins)
 p = C/N         # pdf
+
+println((p[1],p[end]))
 
 # bin arrays
 binsleft = bins[1:end-1]
@@ -58,12 +65,12 @@ function entropy_calc(p,p0,p1,q0,q1)
     return Hx - q0*Hb0 - q1*Hb1
 end
 
-function information_content(x::Array{Float64,1},p::Array,bins::Array,lags::Array{Int},P)
+function information_content(x::Array{Float64,1},y::Array{Float64,1},p::Array,bins::Array,lags::Array{Int},P)
     # preallocate
     nlags = length(lags)
     Icont = zeros(32,nlags)
 
-    # convert only once to posit bits
+    # PREDICTOR X: convert only once to posit bits
     B = zeros(Int8,32,length(x))
     for (xin,xi) in enumerate(x)
         for (ib,b) in enumerate(bits(P(xi)))
@@ -72,11 +79,11 @@ function information_content(x::Array{Float64,1},p::Array,bins::Array,lags::Arra
     end
 
     for (ilag,lag) in enumerate(lags)
+        println("$ilag/$nlags")
         for ibit in 1:32
-            p0,p1,q0,q1 = conditional_histogram(x,B[ibit,:],bins,lag)
-
+            # use the predictand y here
+            p0,p1,q0,q1 = conditional_histogram(y,B[ibit,:],bins,lag)
             Icont[ibit,ilag] = entropy_calc(p,p0,p1,q0,q1)
-            println("$ilag/$nlags,$ibit/32, $(Icont[ibit,ilag])")
         end
     end
     return Icont
@@ -86,6 +93,6 @@ end
 # preallocate
 lags = cat(1,[0,1,2,3,4,5],Int.(round.(10.^(-1.5:0.1:2)./0.005)))
 P = Posit{32,2}
-Icont = information_content(x,p,bins,lags,P)
+Icont = information_content(predictor,predictand,p,bins,lags,P)
 
-save("data/infcont_posits.jld","Icont",Icont)
+save("data/infcont_posits_$suffix.jld","Icont",Icont)
