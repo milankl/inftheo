@@ -37,31 +37,6 @@ function conditional_histogram(x::Array,cond::Array,bins::Array,lag::Int)
     return p0,p1,q0,q1
 end
 
-function bits_signed_exp(x::Float32,i::Int)
-    # converts the exponent bits from an unsigned integer to a signed integer
-    if i == 1 || i >= 10    # the bit requested is not an exponent bit
-        return bits(x)[i]
-    else    # i is in [2,..,9]
-        bias = 127
-        k = parse(Int,"0b"*bits(x)[2:9])-bias    # signed exponent
-
-        # subnormal numbers, i.e. x=0 means all exponent bits are 0
-        if k == -bias   # i.e. x was 0
-            k = 0
-        end
-
-        if i == 2   # sign of exponent
-            if k < 0
-                return '1'
-            else
-                return '0'
-            end
-        else
-            return bits(abs(k))[end-9+i]    # the remaining 7 bits of the exponent
-        end
-    end
-end
-
 # entropy calculation
 function entropy(p::Array)
     H = 0.

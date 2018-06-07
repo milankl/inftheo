@@ -5,14 +5,14 @@ using PyCall
 
 cd("/home/kloewer/julia/inftheo/")
 
-Icontf = load("data/infcont_floats.jld")["Icont"]
-Icontp = load("data/infcont_posits.jld")["Icont"]
+Icontf = load("data/infcont_floats_xx.jld")["Icont"]
+Icontp = load("data/infcont_posits_xx.jld")["Icont"]
 
 Icontf[Icontf.<=0] = NaN
-lIcontf = log.(Icontf)
+lIcontf = log10.(Icontf)
 
 Icontp[Icontp.<=0] = NaN
-lIcontp = log.(Icontp)
+lIcontp = log10.(Icontp)
 
 #lags = Int.(round.(10.^(-1.5:0.1:2)./0.005))
 lags = cat(1,[0,1,2,3,4,5],Int.(round.(10.^(-1.5:0.1:2)./0.005)))
@@ -29,8 +29,8 @@ ylabels = cat(1,ylabelsign,ylabelexp,ylabelfrac)
 ylabel2 = cat(1,ylabelsign,ylabelposit)
 
 fig,(ax1,ax2) = subplots(1,2,figsize=(10,5),sharex=true)
-Q1 = ax1[:pcolormesh](lagvec,bitvec,lIcontf,vmin=-10,vmax=1,cmap="cubehelix_r")
-Q2 = ax2[:pcolormesh](lagvec,bitvec,lIcontp,vmin=-10,vmax=1,cmap="cubehelix_r")
+Q1 = ax1[:pcolormesh](lagvec,bitvec,lIcontf,vmin=-4,vmax=0,cmap="cubehelix_r")
+Q2 = ax2[:pcolormesh](lagvec,bitvec,lIcontp,vmin=-4,vmax=0,cmap="cubehelix_r")
 
 ax1[:invert_yaxis]()
 ax1[:set_yticks](Array(1:size(Icontf)[1]))
