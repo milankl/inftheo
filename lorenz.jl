@@ -1,7 +1,6 @@
 using JLD
 using PyPlot
-using PyCall
-@pyimport numpy as np
+using StatsBase
 
 D = load("/home/kloewer/julia/lorenz_posit/dec_accuracy/data/lorenz_hr.jld")
 
@@ -13,7 +12,7 @@ N = length(x)
 
 # histogram of x
 bins = -20.1:0.3:20.1
-C,bins = np.histogram(x,bins)
+C = fit(Histogram,x,bins,closed=:left).weights
 p = C/N         # pdf
 
 # bin arrays
@@ -22,12 +21,12 @@ binsright = bins[2:end]
 binsmid = 1/2*(binsleft+binsright)
 
 # conditional probability based on bit i
-function conditional_histogram(x::Array,cond::Array,bins::Array,lag::Int)
+function conditional_histogram(x::Array,cond::Array,bins::StepRangeLen,lag::Int)
     # cond is binary 0 or 1
     cond0 = (cond .== 0)[1:end-lag]
     cond1 = (cond .== 1)[1:end-lag]
-    hist0,bins = np.histogram(x[lag+1:end][cond0],bins)
-    hist1,bins = np.histogram(x[lag+1:end][cond1],bins)
+    hist0 = fit(Histogram,x[lag+1:end][cond0],bins,closed=:left).weights
+    hist1 = fit(Fistogram,x[lag+1:end][cond1],bins,closed=:left).weights
 
     # normalize
     n0,n1 = sum(cond0),sum(cond1)
@@ -68,20 +67,9 @@ bi = [parse(Int,bits_signed_exp(xi,i)) for xi in x]
 lag = 20
 p0,p1,q0,q1 = conditional_histogram(x,bi,bins,lag)
 
-# entropy calculation
-function entropy(p::Array)
-    H = 0.
-    for pi in p[:]
-        if pi > 0.
-            H -= pi*log2(pi)
-        end
-    end
-    return H
-end
-
-Hx = entropy(p)
-Hb0 = entropy(p0)
-Hb1 = entropy(p1)
+Hx = entropy(p,2)
+Hb0 = entropy(p0,2)
+Hb1 = entropy(p1,2)
 
 # bitwise information content
 Ib = Hx - q0*Hb0 - q1*Hb1

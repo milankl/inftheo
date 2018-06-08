@@ -1,7 +1,6 @@
 using JLD
 using PyPlot
-using PyCall
-@pyimport numpy as np
+using StatsBase
 
 D = load("/home/kloewer/julia/lorenz_posit/dec_accuracy/data/lorenz_hr.jld")
 
@@ -18,7 +17,7 @@ h = 0.3
 #bins = -20.1:h:20.1     # for predictand x
 bins = -27.3:h:27.3     # for predictand y
 #bins = 0.0:h:50.0           # for predictand z
-C,bins = np.histogram(predictand,bins)
+C = fit(Histogram,predictand,bins,closed=:left).weights
 p = C/N         # pdf
 
 println((p[1],p[end]))
@@ -29,12 +28,12 @@ binsright = bins[2:end]
 binsmid = 1/2*(binsleft+binsright)
 
 # conditional probability based on bit i
-function conditional_histogram(x::Array,cond::Array,bins::Array,lag::Int)
+function conditional_histogram(x::Array,cond::Array,bins::StepRangeLen,lag::Int)
     # cond is binary 0 or 1
     cond0 = (cond .== 0)[1:end-lag]
     cond1 = (cond .== 1)[1:end-lag]
-    hist0,bins = np.histogram(x[lag+1:end][cond0],bins)
-    hist1,bins = np.histogram(x[lag+1:end][cond1],bins)
+    hist0 = fit(Histogram,x[lag+1:end][cond0],bins,closed=:left).weights
+    hist1 = fit(Histogram,x[lag+1:end][cond1],bins,closed=:left).weights
 
     # normalize
     n0,n1 = sum(cond0),sum(cond1)
@@ -66,28 +65,17 @@ function bits_signed_exp(x::Float32)
     return all_bits[1]*s_exp_bits*all_bits[10:end]
 end
 
-# entropy calculation
-function entropy(p::Array)
-    H = 0.
-    for pi in p[:]
-        if pi > 0.
-            H -= pi*log2(pi)
-        end
-    end
-    return H
-end
-
 function entropy_calc(p,p0,p1,q0,q1)
 
-    Hx = entropy(p)
-    Hb0 = entropy(p0)
-    Hb1 = entropy(p1)
+    Hx = entropy(p,2)
+    Hb0 = entropy(p0,2)
+    Hb1 = entropy(p1,2)
 
     # bitwise information content
     return Hx - q0*Hb0 - q1*Hb1
 end
 
-function information_content(x::Array{Float32,1},y::Array{Float32,1},p::Array,bins::Array,lags::Array{Int})
+function information_content(x::Array{Float32,1},y::Array{Float32,1},p::Array,bins::StepRangeLen,lags::Array{Int})
     # preallocate
     nlags = length(lags)
     Icont = zeros(32,nlags)

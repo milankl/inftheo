@@ -29,8 +29,8 @@ ylabels = cat(1,ylabelsign,ylabelexp,ylabelfrac)
 ylabel2 = cat(1,ylabelsign,ylabelposit)
 
 fig,(ax1,ax2) = subplots(1,2,figsize=(10,5),sharex=true)
-Q1 = ax1[:pcolormesh](lagvec,bitvec,lIcontf,vmin=-4,vmax=0,cmap="cubehelix_r")
-Q2 = ax2[:pcolormesh](lagvec,bitvec,lIcontp,vmin=-4,vmax=0,cmap="cubehelix_r")
+Q1 = ax1[:pcolormesh](lagvec,bitvec,lIcontf,vmin=-4,vmax=0,cmap=cmaps.tempo)
+Q2 = ax2[:pcolormesh](lagvec,bitvec,lIcontp,vmin=-4,vmax=0,cmap=cmaps.tempo)
 
 ax1[:invert_yaxis]()
 ax1[:set_yticks](Array(1:size(Icontf)[1]))
