@@ -6,7 +6,7 @@ using PyCall
 cd("/home/kloewer/julia/inftheo/")
 
 Icontf = load("data/juls_infcont_floats_uu.jld")["Icont"]
-Icontp = load("data/juls_infcont_floats_uv.jld")["Icont"]
+Icontp = load("data/juls_infcont_floats_uu1.jld")["Icont"]
 
 Icontf[Icontf.<=0] = NaN
 lIcontf = log10.(Icontf)
