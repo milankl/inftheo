@@ -4,10 +4,10 @@ using StatsBase
 
 D = load("/home/kloewer/julia/lorenz_posit/dec_accuracy/data/lorenz_hr.jld")
 
-predictor = D["xyz"][2,:]
+predictor = D["xyz"][1,:]
 predictand = D["xyz"][3,:]
 
-suffix = "yz"
+suffix = "xz"
 println(suffix)
 
 N = length(predictand)
@@ -29,7 +29,7 @@ binsright = bins[2:end]
 binsmid = 1/2*(binsleft+binsright)
 
 # conditional probability based on bit i
-function conditional_histogram(x::Array,cond::Array,bins::Array,lag::Int)
+function conditional_histogram(x::Array,cond::Array,bins::StepRangeLen,lag::Int)
     # cond is binary 0 or 1
     cond0 = (cond .== 0)[1:end-lag]
     cond1 = (cond .== 1)[1:end-lag]
@@ -67,6 +67,13 @@ function information_content(x::Array{Float64,1},y::Array{Float64,1},p::Array,bi
         end
     end
 
+    # flip bits for negative sign bit
+    for xi in 1:length(x)
+        if B[1,xi] == 1
+            B[2:end,xi] = (-B[2:end,xi]+1)
+        end
+    end
+
     for (ilag,lag) in enumerate(lags)
         println("$ilag/$nlags")
         for ibit in 1:32
@@ -84,4 +91,4 @@ lags = cat(1,[0,1,2,3,4,5],Int.(round.(10.^(-1.5:0.1:2)./0.005)))
 P = Posit{32,2}
 Icont = information_content(predictor,predictand,p,bins,lags,P)
 
-#save("data/infcont_posits_$suffix.jld","Icont",Icont)
+save("data/infcont_posits_$suffix.jld","Icont",Icont)

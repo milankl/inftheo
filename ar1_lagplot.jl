@@ -3,19 +3,22 @@ using PyPlot
 using StatsBase
 
 N = 10000000
-
+#=
 # create AR1 process
-ar1 = 0.9   # correlation at lag 1
+ar1 = 0.7   # correlation at lag 1
 predictor = Array{Float32}(N)
 predictor[1] = randn(Float32,1)[1]
 for n = 1:N-1
     predictor[n+1] = ar1*predictor[n] + sqrt(1-ar1^2)*randn(Float32,1)[1]
 end
+=#
+# sinusoidal signal
+predictor = Float32.(sinpi.((1:N)*0.001))
 
 predictand = deepcopy(predictor)
 
 # histogram of x
-bins = -5:0.1:5
+bins = -2.:0.1:2.
 C = fit(Histogram,predictand,bins,closed=:left).weights
 p = C/N         # pdf
 
@@ -70,8 +73,8 @@ end
 
 fig,axs = subplots(1,3,sharex=true,sharey=true,figsize=(10,3))
 
-for (ax,lag) in zip([axs[1],axs[2],axs[3]],[0,10,20])
-    i = 1
+for (ax,lag) in zip([axs[1],axs[2],axs[3]],[0,50,100])
+    i = 8
     bi = [parse(Int,bits_signed_exp(xi,i)) for xi in predictor]
     #bi = [parse(Int,bits(P(xi))[i]) for xi in x]
 
@@ -91,9 +94,9 @@ for (ax,lag) in zip([axs[1],axs[2],axs[3]],[0,10,20])
     end
 
     #
-    ax[:plot](binsmid,p,drawstyle="steps-post",label=L"$p(x)$")
-    ax[:plot](binsmid,p0,drawstyle="steps-post",label=L"$p(x|x_1(t-τ) = 0)$")
-    ax[:plot](binsmid,p1,drawstyle="steps-post",label=L"$p(x|x_1(t-τ) = 1)$")
+    ax[:plot](binsleft,p,drawstyle="steps-post",label=L"$p(x)$")
+    ax[:plot](binsleft,p0,drawstyle="steps-post",label=L"$p(x|x_1(t-τ) = 0)$")
+    ax[:plot](binsleft,p1,drawstyle="steps-post",label=L"$p(x|x_1(t-τ) = 1)$")
     ax[:text](0.7,0.9,"I = $(f2(Ib))",transform=ax[:transAxes])
 end
 
