@@ -1,28 +1,28 @@
 using NetCDF
-using PyPlot
+using Printf
 using StatsBase
+using JLD2
 
 path = "/local/kloewer/julsdata/"
-runs = [5]
+runs = [2]
 
 # LOAD DATA
 ncu = NetCDF.open(path*"run"*@sprintf("%04d",runs[1])*"/u.nc")
 ncv = NetCDF.open(path*"run"*@sprintf("%04d",runs[1])*"/v.nc")
 nceta = NetCDF.open(path*"run"*@sprintf("%04d",runs[1])*"/eta.nc")
 
-predictor = reshape(ncu.vars["u"][5,50,:],40019)
-predictand = reshape(nceta.vars["eta"][5,50,:],40019)
+N = size(ncu.vars["u"])[end]
+predictor = reshape(ncu.vars["u"][5,50,:],N)
+predictand = reshape(ncu.vars["u"][15,50,:],N)
+#predictand = predictor
 
-suffix = "ueta"
+suffix = "uu15"
 println(suffix)
-
-N = length(predictand)
+dt = ncu.gatts["output_dt"]
 
 # unconditional pdf, histogram of predictand
 h = 0.02
-#bins = -20.1:h:20.1     # for predictand x
-bins = -1.7:h:1.7     # for predictand y
-#bins = 0.0:h:50.0           # for predictand z
+bins = minimum(predictand)-2*h:h:maximum(predictand)+2*h     # for predictand y
 C = fit(Histogram,predictand,bins,closed=:left).weights
 p = C/N         # pdf
 
@@ -51,10 +51,10 @@ end
 
 function bits_signed_exp(x::Float32)
     # converts the exponent bits from an unsigned integer to a signed integer
-    all_bits = bits(x)  # unsigned exp
+    all_bits = bitstring(x)  # unsigned exp
 
     bias = 127
-    k = parse(Int,"0b"*bits(x)[2:9])-bias    # signed exponent
+    k = parse(Int,"0b"*bitstring(x)[2:9])-bias    # signed exponent
 
     # subnormal numbers, i.e. x=0 means all exponent bits are 0
     if k == -bias   # i.e. x was 0
@@ -66,7 +66,7 @@ function bits_signed_exp(x::Float32)
             s0 = "0"
         end
 
-        s_exp_bits = s0*bits(abs(k))[end-6:end]    # the remaining 7 bits of the exponent
+        s_exp_bits = s0*bitstring(abs(k))[end-6:end]    # the remaining 7 bits of the exponent
     end
     return all_bits[1]*s_exp_bits*all_bits[10:end]
 end
@@ -107,7 +107,7 @@ end
 
 
 # preallocate
-lags = cat(1,[0,1,2,3,4,5],Int.(round.(10.^(0.8:0.06:3))))
+lags = cat([0,1,2,3,4,5],Int.(round.(10 .^(0.8:0.06:3))),dims=1)
 Icont = information_content(predictor,predictand,p,bins,lags)
 
-save("data/juls_infcont_floats_$suffix.jld","Icont",Icont)
+save("data/juls/infcont_floats_$suffix.jld2","Icont",Icont,"lags",lags,"dt",dt,"h",h)
