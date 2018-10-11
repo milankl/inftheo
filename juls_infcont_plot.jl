@@ -1,13 +1,27 @@
 using PyPlot
 using JLD2
-using PyCall
 using FileIO
-@pyimport cmocean.cm as cmaps
+
+function continuous_idx(v::Array,x::Real)
+    if v != sort(v)
+        throw(error("Only monotonically increasing arrays are allowed."))
+    end
+
+    i1 = find_closest(v,x)
+    if v[i1] > x
+        i1 -= 1
+    end
+    return i1+(x-v[i1])/(v[i1+1]-v[i1])
+end
+
+function find_closest(v::Array,x::Real)
+    return argmin(abs.(v .- x))
+end
 
 cd("/home/kloewer/julia/inftheo/")
 
 file1 = "data/juls/infcont_floats_uu.jld2"
-file2 = "data/juls/infcont_floats_uu4.jld2"
+file2 = "data/juls/infcont_floats_uu40.jld2"
 
 Icont1 = load(file1)["Icont"]
 Icont2 = load(file2)["Icont"]
@@ -75,8 +89,8 @@ ax2[:set_ylim](32.5,.5)
 ax1[:set_xlim](1,32)
 ax2[:set_xlim](1,32)
 ax1[:set_title]("Information content: "*L"u_{i,j}")
-ax2[:set_title]("Information content: "*L"u_{i+4,j}")
+ax2[:set_title]("Information content: "*L"u_{i+40,j}")
 
 
-savefig("figs/juls_inf_cont_uu4.pdf")
+savefig("figs/juls_inf_cont_uu40.pdf")
 close(fig)

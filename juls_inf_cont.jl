@@ -13,10 +13,10 @@ nceta = NetCDF.open(path*"run"*@sprintf("%04d",runs[1])*"/eta.nc")
 
 N = size(ncu.vars["u"])[end]
 predictor = reshape(ncu.vars["u"][5,50,:],N)
-predictand = reshape(ncu.vars["u"][15,50,:],N)
+predictand = reshape(ncu.vars["u"][45,50,:],N)
 #predictand = predictor
 
-suffix = "uu15"
+suffix = "uu40"
 println(suffix)
 dt = ncu.gatts["output_dt"]
 
@@ -87,7 +87,8 @@ function information_content(x::Array{Float32,1},y::Array{Float32,1},p::Array,bi
     Icont = zeros(32,nlags)
 
     # PREDICTOR X: convert only once to float32 bits
-    B = zeros(Int8,32,length(x))
+    #B = zeros(Int8,32,length(x))
+    B = BitArray{2}(undef,32,length(x))
     for (xin,xi) in enumerate(x)
         for (ib,b) in enumerate(bits_signed_exp(xi))
             B[ib,xin] = parse(Int,b)
