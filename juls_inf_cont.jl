@@ -3,8 +3,9 @@ using Printf
 using StatsBase
 using JLD2
 
-path = "/local/kloewer/julsdata/"
-runs = [2]
+#path = "/local/kloewer/julsdata/"
+path = "/network/aopp/cirrus/pred/kloewer/julsdata/"
+runs = [5]
 
 # LOAD DATA
 ncu = NetCDF.open(path*"run"*@sprintf("%04d",runs[1])*"/u.nc")
@@ -33,11 +34,14 @@ binsleft = bins[1:end-1]
 binsright = bins[2:end]
 binsmid = 1/2*(binsleft+binsright)
 
+const bias = 127
+
 # conditional probability based on bit i
-function conditional_histogram(x::Array,cond::Array,bins::StepRangeLen,lag::Int)
-    # cond is binary 0 or 1
-    cond0 = (cond .== 0)[1:end-lag]
-    cond1 = (cond .== 1)[1:end-lag]
+function conditional_histogram(x::Array{Float32,1},cond::BitArray{1},bins::StepRangeLen,lag::Int)
+    # cond is a bitarray with true/false
+    cond1 = cond[1:end-lag]
+    cond0 = map(!,cond1)
+
     hist0 = fit(Histogram,x[lag+1:end][cond0],bins,closed=:left).weights
     hist1 = fit(Histogram,x[lag+1:end][cond1],bins,closed=:left).weights
 
@@ -53,7 +57,6 @@ function bits_signed_exp(x::Float32)
     # converts the exponent bits from an unsigned integer to a signed integer
     all_bits = bitstring(x)  # unsigned exp
 
-    bias = 127
     k = parse(Int,"0b"*bitstring(x)[2:9])-bias    # signed exponent
 
     # subnormal numbers, i.e. x=0 means all exponent bits are 0
@@ -111,4 +114,4 @@ end
 lags = cat([0,1,2,3,4,5],Int.(round.(10 .^(0.8:0.06:3))),dims=1)
 Icont = information_content(predictor,predictand,p,bins,lags)
 
-save("data/juls/infcont_floats_$suffix.jld2","Icont",Icont,"lags",lags,"dt",dt,"h",h)
+#save("data/juls/infcont_floats_$suffix.jld2","Icont",Icont,"lags",lags,"dt",dt,"h",h)
