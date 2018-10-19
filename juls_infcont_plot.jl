@@ -21,7 +21,7 @@ end
 cd("/home/kloewer/julia/inftheo/")
 
 file1 = "data/juls/infcont_floats_uu.jld2"
-file2 = "data/juls/infcont_floats_uu40.jld2"
+file2 = "data/juls/infcont_floats_uuh.jld2"
 
 Icont1 = load(file1)["Icont"]
 Icont2 = load(file2)["Icont"]
@@ -52,7 +52,7 @@ ylabelfrac = [LaTeXString('$'*"f_{$i}"*'$') for i in 1:23]
 ylabels = cat(ylabelsign,ylabelexp,ylabelfrac,dims=1)
 
 ioff()
-fig,(ax1,ax2) = subplots(1,2,figsize=(10,5),sharex=true)
+fig,(ax1,ax2) = subplots(1,2,figsize=(10,5))
 tight_layout(rect=[0.,.02,0.92,0.98])
 fig[:subplots_adjust](wspace=0.11,hspace=0.03)
 pos2 = ax2[:get_position]()
@@ -71,10 +71,16 @@ ax2[:invert_yaxis]()
 ax2[:set_yticks](Array(1:size(Icont1)[1]))
 ax2[:set_yticklabels](ylabels)
 
-tlabels = [1,2,3,5,10,20]
-xtiks = [continuous_idx(lags1*dt1/3600/24,t) for t in tlabels]
-ax1[:set_xticks](xtiks)
-ax1[:set_xticklabels]([latexstring(t) for t in tlabels])
+tlabels1 = [1,2,3,5,10,20,50,110]
+xtiks1 = [continuous_idx(lags1*dt1/3600/24,t) for t in tlabels1]
+ax1[:set_xticks](xtiks1)
+ax1[:set_xticklabels]([latexstring(t) for t in tlabels1])
+
+tlabels2 = [1,2,3,5,10,20,50,100,200,500,1000]
+xtiks2 = [continuous_idx(lags2*dt1/3600/24,t) for t in tlabels2]
+ax2[:set_xticks](xtiks2)
+ax2[:set_xticklabels]([latexstring(t) for t in tlabels2])
+
 ax1[:set_xlabel]("forecast time [days]")
 ax2[:set_xlabel]("forecast time [days]")
 
@@ -86,11 +92,11 @@ ax2[:plot]([0,length(lagvec2)],[9.5,9.5],"grey",lw=1.5)
 
 ax1[:set_ylim](32.5,.5)
 ax2[:set_ylim](32.5,.5)
-ax1[:set_xlim](1,32)
-ax2[:set_xlim](1,32)
+ax1[:set_xlim](1,size(Icont1)[2])
+ax2[:set_xlim](1,size(Icont2)[2])
 ax1[:set_title]("Information content: "*L"u_{i,j}")
-ax2[:set_title]("Information content: "*L"u_{i+40,j}")
+ax2[:set_title]("Information content: "*L"u_{i,j}")
 
 
-savefig("figs/juls_inf_cont_uu40.pdf")
+savefig("figs/juls_inf_cont_uuh.pdf")
 close(fig)
