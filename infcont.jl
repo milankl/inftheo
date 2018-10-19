@@ -67,7 +67,6 @@ function information_content(x::Array{Float32,1},y::Array{Float32,1},p::Array,bi
             p0,p1,q0,q1 = conditional_histogram(y,B[ibit,:],bins,lag)
             Icont[ibit,ilag] = entropy_calc(p,p0,p1,q0,q1)
         end
-        println("$ilag/$nlags")
     end
     return Icont
 end
